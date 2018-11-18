@@ -6,11 +6,11 @@ use std::fmt::Display;
 use std::io::Stdout;
 use scribe::buffer::Position;
 use self::termion::color::{Bg, Fg};
-use self::termion::{color, cursor};
+use self::termion::{async_stdin, AsyncReader, color, cursor};
 use self::termion::input::{Keys, TermRead};
 use self::termion::raw::{IntoRawMode, RawTerminal};
 use self::termion::style;
-use std::io::{BufWriter, Stdin, stdin, stdout, Write};
+use std::io::{BufWriter, stdout, Write};
 use std::sync::Mutex;
 use view::{Colors, Style};
 
@@ -19,7 +19,7 @@ use input::Key;
 use models::application::Event;
 
 pub struct TermionTerminal {
-    input: Mutex<Option<Keys<Stdin>>>,
+    input: Mutex<Option<Keys<AsyncReader>>>,
     output: Mutex<Option<BufWriter<RawTerminal<Stdout>>>>,
     current_style: Mutex<Option<Style>>,
     current_colors: Mutex<Option<Colors>>,
@@ -29,7 +29,7 @@ impl TermionTerminal {
     #[allow(dead_code)]
     pub fn new() -> TermionTerminal {
         TermionTerminal {
-            input: Mutex::new(Some(stdin().keys())),
+            input: Mutex::new(Some(async_stdin().keys())),
             output: Mutex::new(Some(create_output_instance())),
             current_style: Mutex::new(None),
             current_colors: Mutex::new(None),
@@ -226,7 +226,7 @@ impl Terminal for TermionTerminal {
             guard.replace(create_output_instance());
         }
         if let Ok(mut guard) = self.input.lock() {
-            guard.replace(stdin().keys());
+            guard.replace(async_stdin().keys());
         }
     }
 }
